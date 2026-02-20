@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String?
+  is24h     Boolean  @default(false)
+
+  hours     BranchHours[]
+  schedules Schedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BranchHours {
+  id        String  @id @default(cuid())
+  branchId  String
+  dayOfWeek Int     // 1=Mon ... 7=Sun
+  openMin   Int
+  closeMin  Int
+  branch    Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([branchId, dayOfWeek])
+}
+
+model Pharmacist {
+  id        String   @id @default(cuid())
+  name      String
+  crf       String?
+  phone     String?
+  schedules Schedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Schedule {
+  id            String   @id @default(cuid())
+  branchId      String
+  pharmacistId  String
+  dayOfWeek     Int      // 1..7
+
+  startMin      Int
+  endMin        Int
+  breakStartMin Int?
+  breakEndMin   Int?
+
+  sourceText    String?
+  needsReview   Boolean  @default(false)
+
+  branch        Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  pharmacist    Pharmacist  @relation(fields: [pharmacistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
